@@ -1,40 +1,30 @@
-import PyPDF2
 import nltk.corpus
+import numpy as np
+import docx2txt
 import re
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import utility.keyword as ut
+
 punctuation = re.compile(r'[-.?!@,:;()|0-9]')
+# creating files
+resume = docx2txt.process("Resume2.docx")
+cv = docx2txt.process("CV.docx")
+job_description = docx2txt.process("Job_Description.docx")
 
-resume_pdf = open('Resume.pdf', 'rb')
-cv_pdf = open('CV.pdf', 'rb')
+# A list of text
+text = [resume, job_description]
+# Create a count vectorizer object and convert the text documents to a matrix of token counts
+count_vec = CountVectorizer()
+count_matrix = count_vec.fit_transform(text)
+# Get and print the cosine similarity scores
+print("\nSimilarity Scores:")
+print(cosine_similarity(count_matrix))
 
-# creating a pdf reader object
-resume_reader = PyPDF2.PdfFileReader(resume_pdf)
-cv_reader = PyPDF2.PdfFileReader(cv_pdf)
+# Get the match percentage
+matchPercentage = cosine_similarity(count_matrix)[0][1] * 100
+matchPercentage = round(matchPercentage, 2) # round to two decimal
+print("Your resume matches about "+ str(matchPercentage)+ "% of the job description.")
 
-# printing number of pages in pdf file
-print(resume_reader.numPages)
-
-# creating a page object
-page_obj_r = resume_reader.getPage(0)
-page_obj_cv = cv_reader.getPage(0)
-
-# extracting text from page
-resume_tokens = nltk.word_tokenize(page_obj_r.extractText())
-cv_tokens = nltk.word_tokenize(page_obj_cv.extractText())
-
-resume_no_punctuation = []
-for words in resume_tokens:
-    word = punctuation.sub("",words)
-    if(len(word)>0):
-        resume_no_punctuation.append(word)
-print(resume_no_punctuation)
-
-cv_no_punctuation = []
-for words in cv_tokens:
-    word = punctuation.sub("",words)
-    if(len(word)>0):
-        cv_no_punctuation.append(word)
-print(cv_no_punctuation)
-
-# closing the pdf file object
-resume_pdf.close()
-cv_pdf.close()
+data = ut.find_keyword("flexible, creative, analytical, organized, quick learner", resume)
+print(data)
